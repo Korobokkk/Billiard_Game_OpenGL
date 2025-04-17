@@ -77,12 +77,22 @@ internal class Game : GameWindow
 {
     int VAO;
     int VBO;
+    int EBO;
     Shader shaderProgram = new Shader();
     float[] vertices = {
-    0f, 0.5f, 0f,
-    -0.5f, -0.5f, 0f,
-    0.5f, -0.5f, 0f
+        -0.5f, 0.5f, 0f, // top left vertex - 0
+        0.5f, 0.5f, 0f, // top right vertex - 1
+        0.5f, -0.5f, 0f, // bottom right vertex - 2
+        -0.5f, -0.5f, 0f // bottom left vertex - 3
+
     };
+
+    uint[] indices =
+    {
+        0, 1, 2, //top triangle
+        2, 3, 0 //bottom triangle
+    };
+
     int width, height;
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
@@ -115,6 +125,14 @@ internal class Game : GameWindow
 
         shaderProgram.LoadShader();
 
+
+        EBO = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+        GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length *
+        sizeof(uint), indices, BufferUsageHint.StaticDraw);
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+
         base.OnLoad();
     }
 
@@ -141,6 +159,7 @@ internal class Game : GameWindow
     {
         GL.DeleteBuffer(VAO);
         GL.DeleteBuffer(VBO);
+        GL.DeleteBuffer(EBO);
 
         shaderProgram.DeleteShader();
         base.OnUnload();
@@ -154,7 +173,9 @@ internal class Game : GameWindow
 
         shaderProgram.UseShader();
         GL.BindVertexArray(VAO);
-        GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
+        GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+        GL.DrawElements(PrimitiveType.Triangles, indices.Length,
+        DrawElementsType.UnsignedInt, 0);
 
         Context.SwapBuffers();
 
