@@ -4,8 +4,7 @@ using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using OpenTK.Windowing.GraphicsLibraryFramework;
-
-
+using StbImageSharp;
 class Shader
 {
     public int shaderHandle;
@@ -79,6 +78,8 @@ internal class Game : GameWindow
     int VBO;
     int EBO;
     Shader shaderProgram = new Shader();
+    int textureVBO;
+    int textureID;
     float[] vertices = {
         -0.5f, 0.5f, 0f, // top left vertex - 0
         0.5f, 0.5f, 0f, // top right vertex - 1
@@ -92,7 +93,7 @@ internal class Game : GameWindow
         0, 1, 2, //top triangle
         2, 3, 0 //bottom triangle
     };
-
+    
     int width, height;
     public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
     {
@@ -100,6 +101,13 @@ internal class Game : GameWindow
         this.height = height;
         this.width = width;
     }
+    float[] texCoords =
+    {
+        0f, 1f,
+        1f, 1f,
+        1f, 0f,
+        0f, 0f
+    };
     protected override void OnLoad()
     {
         //Create VAO
@@ -115,22 +123,53 @@ internal class Game : GameWindow
         GL.BindVertexArray(VAO);
         //Bind a slot number 0
 
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false,
-        0, 0);
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
         //Enable the slot
         GL.EnableVertexArrayAttrib(VAO, 0);
         //Unbind the VBO
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-        GL.BindVertexArray(0);
-
-        shaderProgram.LoadShader();
-
 
         EBO = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
         GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length *
         sizeof(uint), indices, BufferUsageHint.StaticDraw);
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+
+        //Create, bind texture
+        textureVBO = GL.GenBuffer();
+        GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO);
+        GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Length * sizeof(float), texCoords, BufferUsageHint.StaticDraw);
+        //Point a slot number 1
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+        //Enable the slot
+        GL.EnableVertexArrayAttrib(VAO, 1);
+
+
+        //Delete everything
+        GL.BindVertexArray(0);
+
+        shaderProgram.LoadShader();
+
+        // Texture Loading
+        textureID = GL.GenTexture(); //Generate empty texture
+        GL.ActiveTexture(TextureUnit.Texture0); //Activate the texture in the unit
+        GL.BindTexture(TextureTarget.Texture2D, textureID); //Bind texture
+
+        //Texture parameters
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+        GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+        //Load image
+        StbImage.stbi_set_flip_vertically_on_load(1);
+        ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/2.jpg"), ColorComponents.RedGreenBlueAlpha);
+
+        GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture.Width, boxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture.Data);
+
+        //Unbind the texture
+        GL.BindTexture(TextureTarget.Texture2D, 0);
 
 
         base.OnLoad();
@@ -161,6 +200,8 @@ internal class Game : GameWindow
         GL.DeleteBuffer(VBO);
         GL.DeleteBuffer(EBO);
 
+        GL.DeleteTexture(textureID);
+
         shaderProgram.DeleteShader();
         base.OnUnload();
     }
@@ -172,10 +213,14 @@ internal class Game : GameWindow
         GL.Clear(ClearBufferMask.ColorBufferBit);
 
         shaderProgram.UseShader();
+        GL.BindTexture(TextureTarget.Texture2D, textureID);
         GL.BindVertexArray(VAO);
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
         GL.DrawElements(PrimitiveType.Triangles, indices.Length,
         DrawElementsType.UnsignedInt, 0);
+
+        
+
 
         Context.SwapBuffers();
 
