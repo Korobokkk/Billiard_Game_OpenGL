@@ -81,10 +81,10 @@ internal class Game : GameWindow
     int textureVBO;
     int textureID;
     float[] vertices = {
-        -0.5f, 0.5f, 0f, // top left vertex - 0
-        0.5f, 0.5f, 0f, // top right vertex - 1
-        0.5f, -0.5f, 0f, // bottom right vertex - 2
-        -0.5f, -0.5f, 0f // bottom left vertex - 3
+        -0.5f, 0.5f, -1f, // top left vertex - 0
+        0.5f, 0.5f, -1f, // top right vertex - 1
+        0.5f, -0.5f, -1f, // bottom right vertex - 2
+        -0.5f, -0.5f, -1f // bottom left vertex - 3
 
     };
 
@@ -123,11 +123,13 @@ internal class Game : GameWindow
         GL.BindVertexArray(VAO);
         //Bind a slot number 0
 
-        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+        GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false,
+        0, 0);
         //Enable the slot
         GL.EnableVertexArrayAttrib(VAO, 0);
         //Unbind the VBO
         GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
 
         EBO = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
@@ -135,18 +137,17 @@ internal class Game : GameWindow
         sizeof(uint), indices, BufferUsageHint.StaticDraw);
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
 
-
         //Create, bind texture
         textureVBO = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO);
-        GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Length * sizeof(float), texCoords, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Length *
+        sizeof(float), texCoords, BufferUsageHint.StaticDraw);
         //Point a slot number 1
-        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+        GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false,
+        0, 0);
         //Enable the slot
         GL.EnableVertexArrayAttrib(VAO, 1);
 
-
-        //Delete everything
         GL.BindVertexArray(0);
 
         shaderProgram.LoadShader();
@@ -214,6 +215,30 @@ internal class Game : GameWindow
 
         shaderProgram.UseShader();
         GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+        //Transformation
+        Matrix4 model = Matrix4.Identity;
+        Matrix4 view = Matrix4.Identity;
+        Matrix4 projection =
+        Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60.0f), width / height, 0.1f, 100.0f);
+
+        model = Matrix4.CreateRotationY(45f);
+        Matrix4 translation = Matrix4.CreateTranslation(0f, 0f, -1f);
+        model *= translation;
+
+
+        int modelLocation =
+GL.GetUniformLocation(shaderProgram.shaderHandle, "model");
+        int viewLocation =
+        GL.GetUniformLocation(shaderProgram.shaderHandle, "view");
+        int projectionLocation =
+        GL.GetUniformLocation(shaderProgram.shaderHandle, "projection");
+
+        GL.UniformMatrix4(modelLocation, true, ref model);
+        GL.UniformMatrix4(viewLocation, true, ref view);
+        GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+
         GL.BindVertexArray(VAO);
         GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
         GL.DrawElements(PrimitiveType.Triangles, indices.Length,
