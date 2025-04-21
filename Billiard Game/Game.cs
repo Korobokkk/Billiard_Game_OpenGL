@@ -80,13 +80,23 @@ internal class Game : GameWindow
     Shader shaderProgram = new Shader();
     int textureVBO;
     int textureID;
-    float[] vertices = {
-        -0.5f, 0.5f, -1f, // top left vertex - 0
-        0.5f, 0.5f, -1f, // top right vertex - 1
-        0.5f, -0.5f, -1f, // bottom right vertex - 2
-        -0.5f, -0.5f, -1f // bottom left vertex - 3
 
+    List<Vector3> vertices = new List<Vector3>()
+    {
+        //front face
+        new Vector3(-0.5f, 0.5f, 0f), //top-left vertice
+        new Vector3(0.5f, 0.5f, 0f), //top-right vertice
+        new Vector3( 0.5f, -0.5f, 0f), //bottom-right vertice
+        new Vector3(-0.5f, -0.5f, 0f), //bottom-left vertice
     };
+
+    //float[] vertices = {
+    //    -0.5f, 0.5f, 0f, // top left vertex - 0
+    //    0.5f, 0.5f, 0f, // top right vertex - 1
+    //    0.5f, -0.5f, 0f, // bottom right vertex - 2
+    //    -0.5f, -0.5f, 0f // bottom left vertex - 3
+
+    //};
 
     uint[] indices =
     {
@@ -101,13 +111,21 @@ internal class Game : GameWindow
         this.height = height;
         this.width = width;
     }
-    float[] texCoords =
+    List<Vector2> texCoords = new List<Vector2>()
     {
-        0f, 1f,
-        1f, 1f,
-        1f, 0f,
-        0f, 0f
+        new Vector2(0f, 1f),
+        new Vector2(1f, 1f),
+        new Vector2(1f, 0f),
+        new Vector2(0f, 0f),
     };
+
+    //float[] texCoords =
+    //{
+    //    0f, 1f,
+    //    1f, 1f,
+    //    1f, 0f,
+    //    0f, 0f
+    //};
     protected override void OnLoad()
     {
         //Create VAO
@@ -117,8 +135,8 @@ internal class Game : GameWindow
         //Bind the VBO
         GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
         //Copy vertices data to the buffer
-        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length *
-        sizeof(float), vertices, BufferUsageHint.StaticDraw);
+
+        GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vector3.SizeInBytes, vertices.ToArray(), BufferUsageHint.StaticDraw); 
         //Bind the VAO
         GL.BindVertexArray(VAO);
         //Bind a slot number 0
@@ -140,8 +158,8 @@ internal class Game : GameWindow
         //Create, bind texture
         textureVBO = GL.GenBuffer();
         GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO);
-        GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Length *
-        sizeof(float), texCoords, BufferUsageHint.StaticDraw);
+        GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Count * Vector3.SizeInBytes, texCoords.ToArray(), BufferUsageHint.StaticDraw);
+
         //Point a slot number 1
         GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false,
         0, 0);
@@ -222,7 +240,7 @@ internal class Game : GameWindow
         Matrix4 projection =
         Matrix4.CreatePerspectiveFieldOfView(MathHelper.DegreesToRadians(60.0f), width / height, 0.1f, 100.0f);
 
-        model = Matrix4.CreateRotationY(45f);
+        //model = Matrix4.CreateRotationY(45f);
         Matrix4 translation = Matrix4.CreateTranslation(0f, 0f, -1f);
         model *= translation;
 
