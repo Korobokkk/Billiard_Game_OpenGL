@@ -85,7 +85,228 @@ namespace Open_TK
 
     }
 
+    public class PlatformWall1//придумать норм название
+    {
+        public Shader shaderProgram = new Shader();
+        public int VAO, VBO, EBO, textureVBO, textureID;
+        List<Vector3> vertices = new List<Vector3>()
+        {
+            new Vector3(-2.51f,  0.35f, -5f), //top-left vertice
+			new Vector3(-2.51f,  0.35f, 5f), //top-right vertice
+			new Vector3(-2.51f,  0f, 5f), //bottom-right vertice
+			new Vector3(-2.51f,  0f, -5f), //botom-left vertice
+        };
 
+
+        List<Vector2> texCoords = new List<Vector2>()
+        {
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(1f, 0f),
+            new Vector2(0f, 0f),
+        };
+
+        uint[] indices =
+        {
+            0, 1, 2,	//top triangle
+			2, 3, 0,    //bottom triangle
+        };
+
+
+        //ортогональ
+        public int VAO1, VBO1, EBO1, textureVBO1 ;
+        List<Vector3> vertices1 = new List<Vector3>()
+        {
+            new Vector3(-2.51f,  0.35f, -5.01f), //top-left vertice
+			new Vector3(2.51f,  0.35f, -5.01f), //top-right vertice
+			new Vector3(2.51f,  0f, -5.01f), //bottom-right vertice
+			new Vector3(-2.51f,  0f, -5.01f), //botom-left vertice
+        };
+
+
+        List<Vector2> texCoords1 = new List<Vector2>()
+        {
+            new Vector2(0f, 1f),
+            new Vector2(1f, 1f),
+            new Vector2(1f, 0f),
+            new Vector2(0f, 0f),
+        };
+        uint[] indices1 =
+        {
+            0, 1, 2,	//top triangle
+			2, 3, 0,    //bottom triangle
+        };
+        public void Initialize()
+        {
+            this.OnLoad();
+        }
+
+        public void OnLoad()
+        {
+
+            //Создаем вершинный буфер и буфер с данными вершин
+            VAO = GL.GenVertexArray();
+            VBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
+            GL.BufferData(BufferTarget.ArrayBuffer,
+                vertices.Count * Vector3.SizeInBytes,
+                vertices.ToArray(),
+                BufferUsageHint.StaticDraw);
+            GL.BindVertexArray(VAO);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexArrayAttrib(VAO, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+
+            //EBO
+            EBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+            //Create, bind texture
+            textureVBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Count * Vector3.SizeInBytes, texCoords.ToArray(), BufferUsageHint.StaticDraw);
+            //Point a slot number 1
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+            //Enable the slot
+            GL.EnableVertexArrayAttrib(VAO, 1);
+
+
+            //Delete everything
+            GL.BindVertexArray(0);
+
+            shaderProgram.LoadShader();
+
+            // Texture Loading
+            textureID = GL.GenTexture(); //Generate empty texture
+            GL.ActiveTexture(TextureUnit.Texture0); //Activate the texture in the unit
+            GL.BindTexture(TextureTarget.Texture2D, textureID); //Bind texture
+
+            //Texture parameters
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            //Load image
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/wall.png"), ColorComponents.RedGreenBlueAlpha);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture.Width, boxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture.Data);
+
+            //Unbind the texture
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+            //__________________Ортогональ_____________________________________
+            VAO1 = GL.GenVertexArray();
+            VBO1 = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO1);
+            GL.BufferData(BufferTarget.ArrayBuffer,
+                vertices1.Count * Vector3.SizeInBytes,
+                vertices1.ToArray(),
+                BufferUsageHint.StaticDraw);
+            GL.BindVertexArray(VAO1);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexArrayAttrib(VAO1, 0);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
+
+
+            //EBO
+            EBO1 = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO1);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices1.Length * sizeof(uint), indices1, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
+
+            //Create, bind texture
+            textureVBO1 = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO1);
+            GL.BufferData(BufferTarget.ArrayBuffer, texCoords1.Count * Vector3.SizeInBytes, texCoords1.ToArray(), BufferUsageHint.StaticDraw);
+            //Point a slot number 1
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+            //Enable the slot
+            GL.EnableVertexArrayAttrib(VAO1, 1);
+
+
+            //Delete everything
+            GL.BindVertexArray(0);
+
+            shaderProgram.LoadShader();
+
+            // Texture Loading
+            textureID = GL.GenTexture(); //Generate empty texture
+            GL.ActiveTexture(TextureUnit.Texture0); //Activate the texture in the unit
+            GL.BindTexture(TextureTarget.Texture2D, textureID); //Bind texture
+
+            //Texture parameters
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+
+            //Load image
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            ImageResult boxTexture1 = ImageResult.FromStream(File.OpenRead("../../../Textures/wall.png"), ColorComponents.RedGreenBlueAlpha);
+
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture1.Width, boxTexture1.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture1.Data);
+
+            //Unbind the texture
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+
+        }
+
+        public void Render(Matrix4 view, Matrix4 projection)
+        {
+            shaderProgram.UseShader();
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+            Matrix4 model = Matrix4.Identity; // платформа уже внизу сцены
+
+            int modelLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "model");
+            int viewLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "view");
+            int projectionLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "projection");
+
+            GL.UniformMatrix4(modelLocation, true, ref model);
+            GL.UniformMatrix4(viewLocation, true, ref view);
+            GL.UniformMatrix4(projectionLocation, true, ref projection);
+
+            GL.BindVertexArray(VAO);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+            GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+
+            //ВТОРОЙ
+
+            Vector3 tmp = new Vector3(5.02f, 0f, 0f);
+            Matrix4 model2 =  Matrix4.CreateTranslation(tmp);
+            //model2 *= Matrix4.CreateScale(1f, 1f, -1f);
+
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref model2);
+            GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
+
+
+            //ортогональ
+
+
+            //ближняя стенка
+            Matrix4 modelFront = Matrix4.Identity;
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref modelFront);
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "view"), true, ref view);
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "projection"), true, ref projection);
+
+            GL.BindVertexArray(VAO1);
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO1);
+            GL.DrawElements(PrimitiveType.Triangles, indices1.Length, DrawElementsType.UnsignedInt, 0);
+
+            //дальняя стенка
+            Vector3 tmp1 = new Vector3(0f, 0f, 10.02f);
+            Matrix4 modelFront1 = Matrix4.CreateScale(-1f, 1f, 1f) * Matrix4.CreateTranslation(tmp1);
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref modelFront1);
+            GL.DrawElements(PrimitiveType.Triangles, indices1.Length, DrawElementsType.UnsignedInt, 0);
+        }
+
+    }
     public class PlatformWall()
     {
         public Shader shaderProgram = new Shader();
@@ -351,7 +572,7 @@ namespace Open_TK
     }
 
         public class Platform
-    {
+        {
         public Shader shaderProgram= new Shader();
         public int VAO, VBO, EBO, textureVBO, textureID;
         List<Vector3> vertices = new List<Vector3>()
@@ -470,6 +691,7 @@ namespace Open_TK
 
         PlatformWall wall = new PlatformWall();
         Platform platform=new Platform();
+        PlatformWall1 platform1= new PlatformWall1();
 
         List<Vector3> vertices = new List<Vector3>()
         {	
@@ -584,7 +806,7 @@ namespace Open_TK
 
             platform.Initialize();
             wall.Initialize();
-
+            platform1.Initialize();
             //Create VAO
             VAO = GL.GenVertexArray();
             //Create VBO
@@ -699,6 +921,8 @@ namespace Open_TK
             //отрисовка платформы
             platform.Render(view, projection);
             wall.Render(view, projection);
+            platform1.Render(view, projection);
+
 
             //свапчик
             Context.SwapBuffers();
