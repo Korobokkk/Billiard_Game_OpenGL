@@ -163,7 +163,7 @@ namespace Open_TK
             // VBO для вершин
             VBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vector3.SizeInBytes, vertices.ToArray(), BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vector3.SizeInBytes, vertices.ToArray(), BufferUsageHint.DynamicDraw);
             GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.EnableVertexAttribArray(0);
 
@@ -218,8 +218,52 @@ namespace Open_TK
             GL.DrawElements(PrimitiveType.Triangles, indices.Count, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
-    }
 
+
+        public void chekingLoose()
+        {
+
+        }
+
+        public bool checkingOutput()
+        {
+
+
+            if (checkInterval((float)Position.X, 2.0f, 2.5f) == true && checkInterval((float)Position.Z, 4.0f, 5f) == true || checkInterval((float)Position.X, 1.5f, 2.5f) == true && checkInterval((float)Position.Z, 4.5f, 5f) == true)
+            {
+                return true;
+            }
+
+            else if (checkInterval((float)Position.X, 2f, 2.5f) == true && checkInterval((float)Position.Z, 0f, 0.5f) == true)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public void checkWallConnect()
+        {
+            if (checkInterval((float)Position.Z, 0.5f, 4.5f) == true && checkInterval((float)Position.X, 2.0f, 2.5f))
+            {
+                Velocity = new Vector3(-Velocity.X * 0.9f, 0, Velocity.Z * 0.9f);
+            }
+            if (checkInterval((float)Position.Z, 4.5f, 5f) == true && checkInterval((float)Position.X, 0f, 2f))
+            {
+                Velocity = new Vector3(Velocity.X * 0.9f, 0, -Velocity.Z * 0.9f);
+            }
+        }
+        public bool checkInterval(float tmp, float min, float max)
+        {
+            //для работы с краем шара а не с центром объекта
+            tmp = Math.Abs(tmp) + this.radius;
+            if (tmp < min || tmp > max)
+            {
+                return false;
+            }
+            return true;
+        }
+
+    }
 
     public class PlatformWall1//придумать норм название
     {
@@ -826,8 +870,8 @@ namespace Open_TK
         int width, height;
 
         PlatformWall wall = new PlatformWall();
-        Platform platform=new Platform();
-        PlatformWall1 platform1= new PlatformWall1();
+        Platform platform = new Platform();
+        PlatformWall1 platform1 = new PlatformWall1();
         List<Sphere> spheres = new List<Sphere>();
 
         List<Vector3> vertices = new List<Vector3>()
@@ -956,7 +1000,7 @@ namespace Open_TK
             Sphere sphere2 = new Sphere();
             sphere2.Initialize();
             sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
-            sphere2.Velocity = new Vector3(0.0f, 0.3f, 0.0f); // Начальная скорость
+            sphere2.Velocity = new Vector3(0.0f, 0.0f, 15.0f); // Начальная скорость
             spheres.Add(sphere2);
 
 
@@ -1035,7 +1079,7 @@ namespace Open_TK
             camera = new Camera(width, height, Vector3.Zero);
             CursorState = CursorState.Grabbed;
         }
-
+        
         protected override void OnUnload()
         {
             base.OnUnload();
@@ -1099,6 +1143,32 @@ namespace Open_TK
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
+
+            float deltaTime = (float)args.Time; // сколько времени прошло с прошлого кадра
+
+            foreach (var sphere in spheres.ToList()) // ToList() чтобы безопасно удалять в процессе
+            {
+                sphere.Velocity =new Vector3(sphere.Velocity.X* 0.9995f, 0, sphere.Velocity.Z*0.9995f);
+                //Проверка на остановку
+                if (sphere.Velocity.Length < 0.1f)
+                {
+                    sphere.Velocity = Vector3.Zero;
+                }
+                // Обновляем позицию шара по его скорости
+                sphere.Position += sphere.Velocity * deltaTime;
+
+                // Проверка на столкновение со стенками
+                sphere.checkWallConnect();
+
+                
+                // Проверка на выпадение за пределы 
+                if (sphere.checkingOutput())
+                {
+                    spheres.Remove(sphere); // Удаляем шар из игры
+                }
+                //Трение(возможно увеличить)
+                //sphere.Velocity *= 0.95f*deltaTime;
+            }
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
             {
