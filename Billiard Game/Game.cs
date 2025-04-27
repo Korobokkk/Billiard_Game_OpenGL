@@ -85,6 +85,137 @@ namespace Open_TK
 
     }
 
+    public class Sphere
+    {
+        public Shader shaderProgram = new Shader();
+        public int VAO, VBO, EBO, texVBO, textureID;
+
+        List<Vector3> vertices = new List<Vector3>();
+        List<Vector2> texCoords = new List<Vector2>();
+        List<uint> indices = new List<uint>();
+
+        int sectorCount = 36; // Долгота
+        int stackCount = 18;  // Широта
+        float radius = 0.25f;
+
+        public void Initialize()
+        {
+            GenerateSphereData();
+            OnLoad();
+        }
+
+        private void GenerateSphereData()
+        {
+            for (int i = 0; i <= stackCount; ++i)
+            {
+                float stackAngle = MathF.PI / 2 - i * MathF.PI / stackCount; // от pi/2 до -pi/2
+                float xy = radius * MathF.Cos(stackAngle);
+                float z = radius * MathF.Sin(stackAngle);
+
+                for (int j = 0; j <= sectorCount; ++j)
+                {
+                    float sectorAngle = j * 2 * MathF.PI / sectorCount; // от 0 до 2pi
+
+                    float x = xy * MathF.Cos(sectorAngle);
+                    float y = xy * MathF.Sin(sectorAngle);
+                    vertices.Add(new Vector3(x, y, z));
+
+                    // Текстурные координаты
+                    float s = (float)j / sectorCount;
+                    float t = (float)i / stackCount;
+                    texCoords.Add(new Vector2(s, t));
+                }
+            }
+
+            for (int i = 0; i < stackCount; ++i)
+            {
+                int k1 = i * (sectorCount + 1); // начальная вершина текущей широты
+                int k2 = k1 + sectorCount + 1;  // начальная вершина следующей широты
+
+                for (int j = 0; j < sectorCount; ++j, ++k1, ++k2)
+                {
+                    if (i != 0)
+                    {
+                        indices.Add((uint)k1);
+                        indices.Add((uint)k2);
+                        indices.Add((uint)(k1 + 1));
+                    }
+
+                    if (i != (stackCount - 1))
+                    {
+                        indices.Add((uint)(k1 + 1));
+                        indices.Add((uint)k2);
+                        indices.Add((uint)(k2 + 1));
+                    }
+                }
+            }
+        }
+
+        public void OnLoad()
+        {
+            VAO = GL.GenVertexArray();
+            GL.BindVertexArray(VAO);
+
+            // VBO для вершин
+            VBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vector3.SizeInBytes, vertices.ToArray(), BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(0);
+
+            // VBO для текстурных координат
+            texVBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ArrayBuffer, texVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Count * Vector2.SizeInBytes, texCoords.ToArray(), BufferUsageHint.StaticDraw);
+            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
+            GL.EnableVertexAttribArray(1);
+
+            // EBO
+            EBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
+            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Count * sizeof(uint), indices.ToArray(), BufferUsageHint.StaticDraw);
+
+            // Отвязываем VAO
+            GL.BindVertexArray(0);
+
+            shaderProgram.LoadShader();
+
+            // Загрузка текстуры
+            textureID = GL.GenTexture();
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Linear);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
+
+            StbImage.stbi_set_flip_vertically_on_load(1);
+            ImageResult texture = ImageResult.FromStream(File.OpenRead("../../../Textures/2.jpg"), ColorComponents.RedGreenBlueAlpha);
+            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, texture.Data);
+
+            GL.BindTexture(TextureTarget.Texture2D, 0);
+        }
+
+        public void Render(Matrix4 view, Matrix4 projection)
+        {
+            shaderProgram.UseShader();
+
+            Matrix4 model = Matrix4.Identity;
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref model);
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "view"), true, ref view);
+            GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "projection"), true, ref projection);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, textureID);
+
+            GL.BindVertexArray(VAO);
+            GL.DrawElements(PrimitiveType.Triangles, indices.Count, DrawElementsType.UnsignedInt, 0);
+            GL.BindVertexArray(0);
+        }
+    }
+
+
     public class PlatformWall1//придумать норм название
     {
         public Shader shaderProgram = new Shader();
@@ -571,16 +702,16 @@ namespace Open_TK
         }
     }
 
-        public class Platform
-        {
+   public class Platform
+   {
         public Shader shaderProgram= new Shader();
         public int VAO, VBO, EBO, textureVBO, textureID;
         List<Vector3> vertices = new List<Vector3>()
         {
-            new Vector3(-2.5f,  0f, 5f), //top-left vertice
-			new Vector3(2.5f,  0f, 5f), //top-right vertice
-			new Vector3(2.5f,  0f, -5f), //bottom-right vertice
-			new Vector3(-2.5f,  0f, -5f), //botom-left vertice
+            new Vector3(-2.51f,  0f, 5.01f), //top-left vertice
+		    new Vector3(2.51f,  0f, 5.01f), //top-right vertice
+		    new Vector3(2.51f,  0f, -5.01f), //bottom-right vertice
+		    new Vector3(-2.51f,  0f, -5.01f), //botom-left vertice
         };
         
 
@@ -594,7 +725,7 @@ namespace Open_TK
         uint[] indices =
         {
             0, 1, 2,	//top triangle
-			2, 3, 0,    //bottom triangle
+		    2, 3, 0,    //bottom triangle
         };
         public void Initialize()
         {
@@ -604,8 +735,8 @@ namespace Open_TK
         public void OnLoad()
         {
 
-        //Создаем вершинный буфер и буфер с данными вершин
-        VAO = GL.GenVertexArray();
+            //Создаем вершинный буфер и буфер с данными вершин
+            VAO = GL.GenVertexArray();
             VBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
             GL.BufferData(BufferTarget.ArrayBuffer, 
@@ -652,7 +783,7 @@ namespace Open_TK
 
             //Load image
             StbImage.stbi_set_flip_vertically_on_load(1);
-            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/platform.jpg"), ColorComponents.RedGreenBlueAlpha);
+            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/qqq.jpg"), ColorComponents.RedGreenBlueAlpha);
 
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture.Width, boxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture.Data);
 
@@ -683,7 +814,7 @@ namespace Open_TK
             GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
         }
         
-    }
+}
 
     internal class Game : GameWindow
     {
@@ -692,6 +823,7 @@ namespace Open_TK
         PlatformWall wall = new PlatformWall();
         Platform platform=new Platform();
         PlatformWall1 platform1= new PlatformWall1();
+        Sphere sphere = new Sphere();
 
         List<Vector3> vertices = new List<Vector3>()
         {	
@@ -807,6 +939,7 @@ namespace Open_TK
             platform.Initialize();
             wall.Initialize();
             platform1.Initialize();
+            sphere.Initialize();
             //Create VAO
             VAO = GL.GenVertexArray();
             //Create VBO
@@ -922,7 +1055,7 @@ namespace Open_TK
             platform.Render(view, projection);
             wall.Render(view, projection);
             platform1.Render(view, projection);
-
+            sphere.Render(view, projection);
 
             //свапчик
             Context.SwapBuffers();
