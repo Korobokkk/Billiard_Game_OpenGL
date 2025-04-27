@@ -90,6 +90,10 @@ namespace Open_TK
         public Shader shaderProgram = new Shader();
         public int VAO, VBO, EBO, texVBO, textureID;
 
+        public Vector3 Position = Vector3.Zero;
+        public Vector3 Velocity = Vector3.Zero;
+        public float Scale = 1.0f;
+
         List<Vector3> vertices = new List<Vector3>();
         List<Vector2> texCoords = new List<Vector2>();
         List<uint> indices = new List<uint>();
@@ -201,7 +205,8 @@ namespace Open_TK
         {
             shaderProgram.UseShader();
 
-            Matrix4 model = Matrix4.Identity;
+            Matrix4 model = Matrix4.CreateScale(Scale) * Matrix4.CreateTranslation(Position);
+
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref model);
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "view"), true, ref view);
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "projection"), true, ref projection);
@@ -783,7 +788,7 @@ namespace Open_TK
 
             //Load image
             StbImage.stbi_set_flip_vertically_on_load(1);
-            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/qqq.jpg"), ColorComponents.RedGreenBlueAlpha);
+            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/q.png"), ColorComponents.RedGreenBlueAlpha);
 
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture.Width, boxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture.Data);
 
@@ -823,7 +828,7 @@ namespace Open_TK
         PlatformWall wall = new PlatformWall();
         Platform platform=new Platform();
         PlatformWall1 platform1= new PlatformWall1();
-        Sphere sphere = new Sphere();
+        List<Sphere> spheres = new List<Sphere>();
 
         List<Vector3> vertices = new List<Vector3>()
         {	
@@ -939,7 +944,33 @@ namespace Open_TK
             platform.Initialize();
             wall.Initialize();
             platform1.Initialize();
+
+            //sphere 1
+            Sphere sphere = new Sphere();
             sphere.Initialize();
+            sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); // Разместим их по X
+            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            spheres.Add(sphere);
+
+            //sphere 2
+            Sphere sphere2 = new Sphere();
+            sphere2.Initialize();
+            sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
+            sphere2.Velocity = new Vector3(0.0f, 0.3f, 0.0f); // Начальная скорость
+            spheres.Add(sphere2);
+
+
+            //sphere 3
+            Sphere sphere3 = new Sphere();
+            sphere3.Initialize();
+            sphere3.Position = new Vector3(-1.0f, 0.3f, 1.0f); // Разместим их по X
+            sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            spheres.Add(sphere3);
+
+
+
+
+
             //Create VAO
             VAO = GL.GenVertexArray();
             //Create VBO
@@ -1055,7 +1086,10 @@ namespace Open_TK
             platform.Render(view, projection);
             wall.Render(view, projection);
             platform1.Render(view, projection);
-            sphere.Render(view, projection);
+            foreach (var sphere in spheres)
+            {
+                sphere.Render(view, projection);
+            }
 
             //свапчик
             Context.SwapBuffers();
