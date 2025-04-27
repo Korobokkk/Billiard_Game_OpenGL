@@ -102,10 +102,10 @@ namespace Open_TK
         int stackCount = 18;  // Широта
         float radius = 0.25f;
 
-        public void Initialize()
+        public void Initialize(string filename= null)
         {
             GenerateSphereData();
-            OnLoad();
+            OnLoad(filename);
         }
 
         private void GenerateSphereData()
@@ -155,9 +155,15 @@ namespace Open_TK
             }
         }
 
-        public void OnLoad()
+        public void OnLoad(string filename)
         {
-            VAO = GL.GenVertexArray();
+            //Чек filename
+            if (filename == null)
+            {
+                filename = "../../../Textures/2.jpg";
+            }
+
+                VAO = GL.GenVertexArray();
             GL.BindVertexArray(VAO);
 
             // VBO для вершин
@@ -195,7 +201,7 @@ namespace Open_TK
             GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Linear);
 
             StbImage.stbi_set_flip_vertically_on_load(1);
-            ImageResult texture = ImageResult.FromStream(File.OpenRead("../../../Textures/2.jpg"), ColorComponents.RedGreenBlueAlpha);
+            ImageResult texture = ImageResult.FromStream(File.OpenRead(filename), ColorComponents.RedGreenBlueAlpha);
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, texture.Width, texture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, texture.Data);
 
             GL.BindTexture(TextureTarget.Texture2D, 0);
@@ -220,10 +226,6 @@ namespace Open_TK
         }
 
 
-        public void chekingLoose()
-        {
-
-        }
 
         public bool checkingOutput()
         {
@@ -991,16 +993,16 @@ namespace Open_TK
 
             //sphere 1
             Sphere sphere = new Sphere();
-            sphere.Initialize();
+            sphere.Initialize("../../../Textures/a.jpg");
             sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); // Разместим их по X
-            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            sphere.Velocity = new Vector3(3.0f, 0.0f, 2.0f); // Начальная скорость
             spheres.Add(sphere);
 
             //sphere 2
             Sphere sphere2 = new Sphere();
             sphere2.Initialize();
             sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
-            sphere2.Velocity = new Vector3(0.0f, 0.0f, 15.0f); // Начальная скорость
+            sphere2.Velocity = new Vector3(3.0f, 0.0f, 5.0f); // Начальная скорость
             spheres.Add(sphere2);
 
 
@@ -1125,7 +1127,8 @@ namespace Open_TK
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
             GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
             //GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-            
+
+            bool key = true;
             //отрисовка платформы
             platform.Render(view, projection);
             wall.Render(view, projection);
@@ -1134,6 +1137,7 @@ namespace Open_TK
             {
                 sphere.Render(view, projection);
             }
+
 
             //свапчик
             Context.SwapBuffers();
@@ -1166,8 +1170,6 @@ namespace Open_TK
                 {
                     spheres.Remove(sphere); // Удаляем шар из игры
                 }
-                //Трение(возможно увеличить)
-                //sphere.Velocity *= 0.95f*deltaTime;
             }
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
@@ -1176,7 +1178,6 @@ namespace Open_TK
             }
             MouseState mouse = MouseState;
             KeyboardState input = KeyboardState;
-
             base.OnUpdateFrame(args);
             camera.Update(input, mouse, args);
 
