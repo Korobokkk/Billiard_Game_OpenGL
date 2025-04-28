@@ -100,13 +100,14 @@ namespace Open_TK
 
         int sectorCount = 36; // Долгота
         int stackCount = 18;  // Широта
-        float radius = 0.25f;
+        public float radius = 0.25f;
 
         public void Initialize(string filename= null)
         {
             GenerateSphereData();
             OnLoad(filename);
         }
+
 
         private void GenerateSphereData()
         {
@@ -210,7 +211,7 @@ namespace Open_TK
         public void Render(Matrix4 view, Matrix4 projection)
         {
             shaderProgram.UseShader();
-
+            
             Matrix4 model = Matrix4.CreateScale(Scale) * Matrix4.CreateTranslation(Position);
 
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref model);
@@ -224,7 +225,7 @@ namespace Open_TK
             GL.DrawElements(PrimitiveType.Triangles, indices.Count, DrawElementsType.UnsignedInt, 0);
             GL.BindVertexArray(0);
         }
-
+        
 
 
         public bool checkingOutput()
@@ -264,6 +265,7 @@ namespace Open_TK
             }
             return true;
         }
+
 
     }
 
@@ -1044,6 +1046,7 @@ namespace Open_TK
                     }
                 }
             }
+            CheckSphereCollisions();
 
             if (KeyboardState.IsKeyDown(Keys.Escape))
             {
@@ -1141,8 +1144,60 @@ namespace Open_TK
                 }
             }
 
+        }
 
+        private void CheckSphereCollisions()
+        {
+            const float collisionThreshold = 0.55f; // 2 радиуса + 0.05
 
+            for (int i = 0; i < spheres.Count; i++)
+            {
+                for (int j = i + 1; j < spheres.Count; j++)
+                {
+                    Sphere sphereA = spheres[i];
+                    Sphere sphereB = spheres[j];
+
+                    // Вычисляем расстояние между центрами шаров
+                    float distance = (sphereA.Position - sphereB.Position).Length;
+
+                    // Если расстояние между шарами меньше порогового значения, они столкнулись
+                    if (distance < collisionThreshold)
+                    {
+                        // Нормаль вектора столкновения (направление от одного шара к другому)
+                        Vector3 normal = Vector3.Normalize(sphereA.Position - sphereB.Position);
+
+                        // Скорости обоих шаров
+                        Vector3 velocityA = sphereA.Velocity;
+                        Vector3 velocityB = sphereB.Velocity;
+
+                        // Разница в скоростях между шарами
+                        Vector3 velocityDiff = velocityA - velocityB;
+
+                        // Скалярное произведение скорости на нормаль
+                        float velocityAlongNormal = Vector3.Dot(velocityDiff, normal);
+
+                        if (velocityAlongNormal > 0)
+                            continue; // Если шары движутся в одну сторону, пропускаем
+
+                        // Используем коэффициент упругости = 1 для идеального столкновения
+                        float restitution = 0.7f;
+
+                        // Расчет импульса для столкновения
+                        float impulse = -(1 + restitution) * velocityAlongNormal;
+
+                        // Обновляем скорости шаров
+                        sphereA.Velocity += impulse * normal;
+                        sphereB.Velocity -= impulse * normal;
+
+                        // Корректируем позиции шаров, чтобы они не пересекались
+                        float overlap = collisionThreshold - distance;
+                        Vector3 correction = normal * overlap * 0.5f;
+
+                        sphereA.Position += correction;
+                        sphereB.Position -= correction;
+                    }
+                }
+            }
         }
         private void RestartGame()
         {
