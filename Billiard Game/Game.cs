@@ -753,9 +753,9 @@ namespace Open_TK
         }
     }
 
-   public class Platform
-   {
-        public Shader shaderProgram= new Shader();
+    public class Platform
+    {
+        public Shader shaderProgram = new Shader();
         public int VAO, VBO, EBO, textureVBO, textureID;
         List<Vector3> vertices = new List<Vector3>()
         {
@@ -764,7 +764,7 @@ namespace Open_TK
 		    new Vector3(2.51f,  0f, -5.01f), //bottom-right vertice
 		    new Vector3(-2.51f,  0f, -5.01f), //botom-left vertice
         };
-        
+
 
         List<Vector2> texCoords = new List<Vector2>()
         {
@@ -790,8 +790,8 @@ namespace Open_TK
             VAO = GL.GenVertexArray();
             VBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, 
-                vertices.Count * Vector3.SizeInBytes, 
+            GL.BufferData(BufferTarget.ArrayBuffer,
+                vertices.Count * Vector3.SizeInBytes,
                 vertices.ToArray(),
                 BufferUsageHint.StaticDraw);
             GL.BindVertexArray(VAO);
@@ -864,11 +864,26 @@ namespace Open_TK
             GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
             GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
         }
-        
-}
+    }
 
     internal class Game : GameWindow
     {
+        //направление удара
+        private int lineVAO, lineVBO;
+        private float[] lineVertices = new float[6]; // две точки по 3 координаты (x, y, z)
+
+
+        float aimCorner = 0.0f; // угол вращения
+        const float aimSpeed = 5.0f; // скорость вращения (можно регулировать)
+
+
+        //Поля для прицеливания
+        bool allSphereDoNotMove= false;
+        bool aiming = false; // режим прицеливания
+        int powerLevel = 1; // 1,2 или 3
+        Vector3 aimDirection = Vector3.UnitZ*aimSpeed;
+
+
         int width, height;
 
         PlatformWall wall = new PlatformWall();
@@ -876,106 +891,10 @@ namespace Open_TK
         PlatformWall1 platform1 = new PlatformWall1();
         List<Sphere> spheres = new List<Sphere>();
 
-        List<Vector3> vertices = new List<Vector3>()
-        {	
-			//front face
-			new Vector3(-0.5f,  0.5f, 0.5f), //top-left vertice
-			new Vector3( 0.5f,  0.5f, 0.5f), //top-right vertice
-			new Vector3( 0.5f, -0.5f, 0.5f), //bottom-right vertice
-			new Vector3(-0.5f, -0.5f, 0.5f), //botom-left vertice
-			//right face
-			new Vector3( 0.5f,  0.5f, 0.5f), //top-left vertice
-			new Vector3( 0.5f,  0.5f, -0.5f), //top-right vertice
-			new Vector3( 0.5f, -0.5f, -0.5f), //bottom-right vertice
-			new Vector3( 0.5f, -0.5f, 0.5f), //botom-left vertice
-			//back face
-			new Vector3(-0.5f,  0.5f, -0.5f), //top-left vertice
-			new Vector3( 0.5f,  0.5f, -0.5f), //top-right vertice
-			new Vector3( 0.5f, -0.5f, -0.5f), //bottom-right vertice
-			new Vector3(-0.5f, -0.5f, -0.5f), //botom-left vertice
-			//left face
-			new Vector3( -0.5f,  0.5f, 0.5f), //top-left vertice
-			new Vector3( -0.5f,  0.5f, -0.5f), //top-right vertice
-			new Vector3( -0.5f, -0.5f, -0.5f), //bottom-right vertice
-			new Vector3( -0.5f, -0.5f, 0.5f), //botom-left vertice
-			// top face
-			new Vector3(-0.5f,  0.5f, -0.5f), //top-left vertice
-			new Vector3( 0.5f,  0.5f, -0.5f), //top-right vertice
-			new Vector3( 0.5f, 0.5f, 0.5f), //bottom-right vertice
-			new Vector3(-0.5f, 0.5f, 0.5f), //botom-left vertice
-			//bottom face
-			new Vector3(-0.5f,  -0.5f, -0.5f), //top-left vertice
-			new Vector3( 0.5f,  -0.5f, -0.5f), //top-right vertice
-			new Vector3( 0.5f, -0.5f, 0.5f), //bottom-right vertice
-			new Vector3(-0.5f, -0.5f, 0.5f), //botom-left vertice
-		};
-
-        List<Vector2> texCoords = new List<Vector2>()
-        {
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-
-            new Vector2(0f, 1f),
-            new Vector2(1f, 1f),
-            new Vector2(1f, 0f),
-            new Vector2(0f, 0f),
-        };
-
-        uint[] indices =
-        {
-            0, 1, 2,	//top triangle
-			2, 3, 0,	//bottom triangle
-
-			4, 5, 6,
-            6, 7, 4,
-
-            8, 9, 10,
-            10, 11, 8,
-
-            12, 13, 14,
-            14, 15, 12,
-
-            16, 17, 18,
-            18, 19, 16,
-
-            20, 21, 22,
-            22, 23, 20
-        };
-
-
-        int VAO;
-        int VBO;
-        int EBO;
-        Shader shaderProgram = new Shader();
-        int textureID;
-        int textureVBO;
+        Shader shaderProgram = new Shader();    
         Camera camera;
 
-
-        float yRot = 0f;
-
+      
         public Game(int width, int height) : base(GameWindowSettings.Default, NativeWindowSettings.Default)
         {
             this.CenterWindow(new Vector2i(width, height));
@@ -995,14 +914,14 @@ namespace Open_TK
             Sphere sphere = new Sphere();
             sphere.Initialize("../../../Textures/a.jpg");
             sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); // Разместим их по X
-            sphere.Velocity = new Vector3(3.0f, 0.0f, 2.0f); // Начальная скорость
+            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
             spheres.Add(sphere);
 
             //sphere 2
             Sphere sphere2 = new Sphere();
             sphere2.Initialize();
             sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
-            sphere2.Velocity = new Vector3(3.0f, 0.0f, 5.0f); // Начальная скорость
+            sphere2.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
             spheres.Add(sphere2);
 
 
@@ -1013,122 +932,43 @@ namespace Open_TK
             sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
             spheres.Add(sphere3);
 
-
-
-
-
-            //Create VAO
-            VAO = GL.GenVertexArray();
-            //Create VBO
-            VBO = GL.GenBuffer();
-            //Bind the VBO 
-            GL.BindBuffer(BufferTarget.ArrayBuffer, VBO);
-            //Copy vertices data to the buffer
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Count * Vector3.SizeInBytes, vertices.ToArray(), BufferUsageHint.StaticDraw);
-            //Bind the VAO
-            GL.BindVertexArray(VAO);
-            //Point a slot number 0
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
-            //Enable the slot
-            GL.EnableVertexArrayAttrib(VAO, 0);
-            //Unbind the VBO
-            GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
-
-            //EBO 
-            EBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
-            GL.BufferData(BufferTarget.ElementArrayBuffer, indices.Length * sizeof(uint), indices, BufferUsageHint.StaticDraw);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, 0);
-
-            //Create, bind texture
-            textureVBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ArrayBuffer, textureVBO);
-            GL.BufferData(BufferTarget.ArrayBuffer, texCoords.Count * Vector3.SizeInBytes, texCoords.ToArray(), BufferUsageHint.StaticDraw);
-            //Point a slot number 1
-            GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 0, 0);
-            //Enable the slot
-            GL.EnableVertexArrayAttrib(VAO, 1);
-
-
-            //Delete everything
-            GL.BindVertexArray(0);
-
             shaderProgram.LoadShader();
-
-            // Texture Loading
-            textureID = GL.GenTexture(); //Generate empty texture
-            GL.ActiveTexture(TextureUnit.Texture0); //Activate the texture in the unit
-            GL.BindTexture(TextureTarget.Texture2D, textureID); //Bind texture
-
-            //Texture parameters
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapS, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureWrapT, (int)TextureWrapMode.Repeat);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
-
-            //Load image
-            StbImage.stbi_set_flip_vertically_on_load(1);
-            ImageResult boxTexture = ImageResult.FromStream(File.OpenRead("../../../Textures/box.jpg"), ColorComponents.RedGreenBlueAlpha);
-
-            GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, boxTexture.Width, boxTexture.Height, 0, PixelFormat.Rgba, PixelType.UnsignedByte, boxTexture.Data);
-
-            //Unbind the texture
-            GL.BindTexture(TextureTarget.Texture2D, 0);
-
-
             GL.Enable(EnableCap.DepthTest);
 
             camera = new Camera(width, height, Vector3.Zero);
             CursorState = CursorState.Grabbed;
-        }
-        
+
+            lineVAO = GL.GenVertexArray();
+            lineVBO = GL.GenBuffer();
+
+            GL.BindVertexArray(lineVAO);
+            GL.BindBuffer(BufferTarget.ArrayBuffer, lineVBO);
+            GL.BufferData(BufferTarget.ArrayBuffer, lineVertices.Length * sizeof(float), lineVertices, BufferUsageHint.DynamicDraw);
+
+            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 3 * sizeof(float), 0);
+            GL.EnableVertexAttribArray(0);
+
+            GL.BindVertexArray(0);
+        }       
+
         protected override void OnUnload()
         {
             base.OnUnload();
 
-            GL.DeleteBuffer(VAO);
-            GL.DeleteBuffer(VBO);
-            GL.DeleteBuffer(EBO);
-            GL.DeleteTexture(textureID);
 
             shaderProgram.DeleteShader();
 
         }
 
+
         protected override void OnRenderFrame(FrameEventArgs args)
         {           
             GL.ClearColor(0.3f, 0.3f, 1f, 1f);
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
-
-            shaderProgram.UseShader();
-            GL.BindTexture(TextureTarget.Texture2D, textureID);
-
-            //Transformation
-            Matrix4 model = Matrix4.Identity;
+       
             Matrix4 view = camera.GetViewMatrix();
             Matrix4 projection = camera.GetProjection();
-            Matrix4 translation = Matrix4.CreateTranslation(0f, 0f, -3f);
-
-            model = Matrix4.CreateRotationY(yRot);
-            yRot += 0.001f;
-
-            model *= translation;
-
-            int modelLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "model");
-            int viewLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "view");
-            int projectionLocation = GL.GetUniformLocation(shaderProgram.shaderHandle, "projection");
-
-            GL.UniformMatrix4(modelLocation, true, ref model);
-            GL.UniformMatrix4(viewLocation, true, ref view);
-            GL.UniformMatrix4(projectionLocation, true, ref projection);
-
-            //отрисовка куба
-            GL.BindVertexArray(VAO);
-            GL.BindBuffer(BufferTarget.ElementArrayBuffer, EBO);
-            GL.DrawElements(PrimitiveType.Triangles, indices.Length, DrawElementsType.UnsignedInt, 0);
-            //GL.DrawArrays(PrimitiveType.Triangles, 0, 3);
-
-            bool key = true;
+                      
             //отрисовка платформы
             platform.Render(view, projection);
             wall.Render(view, projection);
@@ -1138,12 +978,36 @@ namespace Open_TK
                 sphere.Render(view, projection);
             }
 
+            if (aiming )
+            {
+                Vector3 start = spheres[0].Position + new Vector3(0, 0.2f, 0); // Чуть выше шара
+                Vector3 direction = new Vector3((float)Math.Sin(aimCorner), 0, (float)Math.Cos(aimCorner));
+                //direction = Vector3.Normalize(direction);//длина 1
 
+                Vector3 end = start + direction * 2.0f; 
+
+                lineVertices[0] = start.X;
+                lineVertices[1] = start.Y;
+                lineVertices[2] = start.Z;
+                lineVertices[3] = end.X;
+                lineVertices[4] = end.Y;
+                lineVertices[5] = end.Z;
+
+                GL.BindBuffer(BufferTarget.ArrayBuffer, lineVBO);
+                GL.BufferSubData(BufferTarget.ArrayBuffer, IntPtr.Zero, lineVertices.Length * sizeof(float), lineVertices);
+
+                GL.BindVertexArray(lineVAO);
+                GL.DrawArrays(PrimitiveType.Lines, 0, 2);
+                GL.BindVertexArray(0);
+            }
             //свапчик
             Context.SwapBuffers();
 
             base.OnRenderFrame(args);
         }
+
+     
+
 
         protected override void OnUpdateFrame(FrameEventArgs args)
         {
@@ -1168,7 +1032,16 @@ namespace Open_TK
                 // Проверка на выпадение за пределы 
                 if (sphere.checkingOutput())
                 {
-                    spheres.Remove(sphere); // Удаляем шар из игры
+
+                    if (spheres.IndexOf(sphere) == 0)  // биток не должен удаляться
+                    {
+                        sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); 
+                        sphere.Velocity = Vector3.Zero; // Останавливаем!!!!!!
+                    }
+                    else
+                    {
+                        spheres.Remove(sphere); 
+                    }
                 }
             }
 
@@ -1176,11 +1049,126 @@ namespace Open_TK
             {
                 Close();
             }
+            if (KeyboardState.IsKeyDown(Keys.U))
+            {
+                RestartGame();
+            }
+
             MouseState mouse = MouseState;
             KeyboardState input = KeyboardState;
             base.OnUpdateFrame(args);
             camera.Update(input, mouse, args);
 
+            //аимчик
+           
+            if (input.IsKeyDown(Keys.R))
+            {
+                allSphereDoNotMove = true;
+                foreach (var sphere in spheres)
+                {
+                    if (sphere.Velocity != Vector3.Zero)
+                    {
+                        allSphereDoNotMove = false;
+                    }
+                }
+
+                if (allSphereDoNotMove)
+                {
+                    // Выбор силы удара
+                    if (input.IsKeyDown(Keys.D1))
+                    {
+                        powerLevel = 1;
+                        aiming = true;
+                    }
+                    else if (input.IsKeyDown(Keys.D2))
+                    {
+                        powerLevel = 2;
+                        aiming = true;
+                    }
+                    else if (input.IsKeyDown(Keys.D3))
+                    {
+                        powerLevel = 3;
+                        aiming = true;
+                    }
+
+
+                    //если сделан выбор  выбираем направление удара(добавить отрисовку направления удара)
+                    if (aiming)
+                    {
+                        
+
+                        // Вращение направления удара стрелками
+                        if (input.IsKeyDown(Keys.Left))
+                        {
+                            aimCorner -= aimSpeed * deltaTime;
+                        }
+                        if (input.IsKeyDown(Keys.Right))
+                        {
+                            aimCorner += aimSpeed * deltaTime;
+                        }
+
+                        // фигачим направление по углу
+                        aimDirection = new Vector3((float)Math.Sin(aimCorner), 0, (float)Math.Cos(aimCorner));
+                        //aimDirection = Vector3.Normalize(aimDirection);
+
+                        //для удара enter
+                        if (input.IsKeyDown(Keys.Enter))
+                        {
+                            if (spheres.Count > 0)
+                            {
+                                float coefPower = 0f;
+                                if (powerLevel == 1)
+                                {
+                                    coefPower = 3.0f;
+                                }
+                                else if(powerLevel==2)
+                                {
+                                    coefPower = 5.0f;
+                                }
+                                else
+                                {
+                                    coefPower = 10f;
+                                }
+                                spheres[0].Velocity = Vector3.Normalize(aimDirection) * coefPower;
+                                Console.WriteLine($"Удар! Новая скорость: {spheres[0].Velocity}");
+                               
+                            }
+                            aimCorner= 0;
+                            aiming = false;
+                        }
+
+                    }
+                }
+            }
+
+
+
+        }
+        private void RestartGame()
+        {
+            spheres.Clear();
+
+            Sphere sphere = new Sphere();
+            sphere.Initialize("../../../Textures/a.jpg");
+            sphere.Position = new Vector3(0.0f, 0.3f, 0.0f);  
+            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            spheres.Add(sphere);
+
+            Sphere sphere2 = new Sphere();
+            sphere2.Initialize();
+            sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f);  
+            sphere2.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            spheres.Add(sphere2);
+
+            Sphere sphere3 = new Sphere();
+            sphere3.Initialize();
+            sphere3.Position = new Vector3(-1.0f, 0.3f, 1.0f);  
+            sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            spheres.Add(sphere3);
+
+            aiming = false;
+            aimCorner = 0.0f;
+            powerLevel = 1;
         }
 
         protected override void OnResize(ResizeEventArgs e)
@@ -1190,11 +1178,6 @@ namespace Open_TK
             this.width = e.Width;
             this.height = e.Height;
         }
-
-
-
-
     }
-
 
 }
