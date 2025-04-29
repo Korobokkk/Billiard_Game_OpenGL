@@ -102,6 +102,12 @@ namespace Open_TK
         int stackCount = 18;  // Широта
         public float radius = 0.25f;
 
+
+        ////врашение(захардкодить)
+        //public float rotationX = 0f;
+        //public float rotationZ = 0f;
+
+
         public void Initialize(string filename= null)
         {
             GenerateSphereData();
@@ -211,7 +217,7 @@ namespace Open_TK
         public void Render(Matrix4 view, Matrix4 projection)
         {
             shaderProgram.UseShader();
-            
+
             Matrix4 model = Matrix4.CreateScale(Scale) * Matrix4.CreateTranslation(Position);
 
             GL.UniformMatrix4(GL.GetUniformLocation(shaderProgram.shaderHandle, "model"), true, ref model);
@@ -912,27 +918,110 @@ namespace Open_TK
             wall.Initialize();
             platform1.Initialize();
 
-            //sphere 1
+            ////sphere 1
+            //Sphere sphere = new Sphere();
+            //sphere.Initialize("../../../Textures/a.jpg");
+            //sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); // Разместим их по X
+            //sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            //spheres.Add(sphere);
+
+            ////sphere 2
+            //Sphere sphere2 = new Sphere();
+            //sphere2.Initialize();
+            //sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
+            //sphere2.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            //spheres.Add(sphere2);
+
+
+            ////sphere 3
+            //Sphere sphere3 = new Sphere();
+            //sphere3.Initialize();
+            //sphere3.Position = new Vector3(-1.0f, 0.3f, 1.0f); // Разместим их по X
+            //sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            //spheres.Add(sphere3);
+
+
+            // sphere 1 (биток )
             Sphere sphere = new Sphere();
             sphere.Initialize("../../../Textures/a.jpg");
-            sphere.Position = new Vector3(0.0f, 0.3f, 0.0f); // Разместим их по X
-            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            sphere.Position = new Vector3(0.0f, 0.3f, -3.5f); // Биток ближе к центру
+            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f);
             spheres.Add(sphere);
 
-            //sphere 2
+            
+            float ballRadius = 0.25f;
+            float startX = -0.5f;
+            float startZ = 0.5f;
+
+            // sphere 2
             Sphere sphere2 = new Sphere();
             sphere2.Initialize();
-            sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f); // Разместим их по X
-            sphere2.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            sphere2.Position = new Vector3(0.0f, 0.3f, startZ + ballRadius * 2);
+            sphere2.Velocity = Vector3.Zero;
             spheres.Add(sphere2);
 
-
-            //sphere 3
+            // sphere 3
             Sphere sphere3 = new Sphere();
             sphere3.Initialize();
-            sphere3.Position = new Vector3(-1.0f, 0.3f, 1.0f); // Разместим их по X
-            sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f); // Начальная скорость
+            sphere3.Position = new Vector3(-ballRadius * 2, 0.3f, startZ + ballRadius * 4);
+            sphere3.Velocity = Vector3.Zero;
             spheres.Add(sphere3);
+
+            //sphere 4
+            Sphere sphere4 = new Sphere();
+            sphere4.Initialize();
+            sphere4.Position = new Vector3(ballRadius * 2, 0.3f, startZ + ballRadius * 4);
+            sphere4.Velocity = Vector3.Zero;
+            spheres.Add(sphere4);
+
+            // sphere 5
+            Sphere sphere5 = new Sphere();
+            sphere5.Initialize();
+            sphere5.Position = new Vector3(-ballRadius * 4, 0.3f, startZ + ballRadius * 6);
+            sphere5.Velocity = Vector3.Zero;
+            spheres.Add(sphere5);
+            
+            //sphere 6
+            Sphere sphere6 = new Sphere();
+            sphere6.Initialize();
+            sphere6.Position = new Vector3(0.0f, 0.3f, startZ + ballRadius * 6);
+            sphere6.Velocity = Vector3.Zero;
+            spheres.Add(sphere6);
+
+            //sphere 7
+            Sphere sphere7 = new Sphere();
+            sphere7.Initialize();
+            sphere7.Position = new Vector3(ballRadius * 4, 0.3f, startZ + ballRadius * 6);
+            sphere7.Velocity = Vector3.Zero;
+            spheres.Add(sphere7);
+
+            //sphere 8
+            Sphere sphere8 = new Sphere();
+            sphere8.Initialize();
+            sphere8.Position = new Vector3(-ballRadius * 6, 0.3f, startZ + ballRadius * 8);
+            sphere8.Velocity = Vector3.Zero;
+            spheres.Add(sphere8);
+
+            //sphere 9
+            Sphere sphere9 = new Sphere();
+            sphere9.Initialize();
+            sphere9.Position = new Vector3(-ballRadius * 2, 0.3f, startZ + ballRadius * 8);
+            sphere9.Velocity = Vector3.Zero;
+            spheres.Add(sphere9);
+
+            //sphere 10
+            Sphere sphere10 = new Sphere();
+            sphere10.Initialize();
+            sphere10.Position = new Vector3(ballRadius * 2, 0.3f, startZ + ballRadius * 8);
+            sphere10.Velocity = Vector3.Zero;
+            spheres.Add(sphere10);
+
+            //sphere 11
+            Sphere sphere11 = new Sphere();
+            sphere11.Initialize();
+            sphere11.Position = new Vector3(ballRadius * 6, 0.3f, startZ + ballRadius * 8);
+            sphere11.Velocity = Vector3.Zero;
+            spheres.Add(sphere11);
 
             shaderProgram.LoadShader();
             GL.Enable(EnableCap.DepthTest);
@@ -1157,35 +1246,32 @@ namespace Open_TK
                     Sphere sphereA = spheres[i];
                     Sphere sphereB = spheres[j];
 
-                    // Вычисляем расстояние между центрами шаров
+                    // пасстояние между центрами шаров
                     float distance = (sphereA.Position - sphereB.Position).Length;
 
-                    // Если расстояние между шарами меньше порогового значения, они столкнулись
+                    // чек столкновения
                     if (distance < collisionThreshold)
                     {
                         // Нормаль вектора столкновения (направление от одного шара к другому)
                         Vector3 normal = Vector3.Normalize(sphereA.Position - sphereB.Position);
-
-                        // Скорости обоих шаров
+                        
                         Vector3 velocityA = sphereA.Velocity;
                         Vector3 velocityB = sphereB.Velocity;
 
                         // Разница в скоростях между шарами
                         Vector3 velocityDiff = velocityA - velocityB;
 
-                        // Скалярное произведение скорости на нормаль
+                        // Скалярное произведение vel на n
                         float velocityAlongNormal = Vector3.Dot(velocityDiff, normal);
 
                         if (velocityAlongNormal > 0)
-                            continue; // Если шары движутся в одну сторону, пропускаем
+                            continue; 
 
-                        // Используем коэффициент упругости = 1 для идеального столкновения
-                        float restitution = 0.7f;
+                        float restitution = 1f;
 
-                        // Расчет импульса для столкновения
-                        float impulse = -(1 + restitution) * velocityAlongNormal;
+                        //  импульс
+                        float impulse = -(1f + restitution) * velocityAlongNormal/2;
 
-                        // Обновляем скорости шаров
                         sphereA.Velocity += impulse * normal;
                         sphereB.Velocity -= impulse * normal;
 
@@ -1203,23 +1289,87 @@ namespace Open_TK
         {
             spheres.Clear();
 
+            // sphere 1 (биток )
             Sphere sphere = new Sphere();
             sphere.Initialize("../../../Textures/a.jpg");
-            sphere.Position = new Vector3(0.0f, 0.3f, 0.0f);  
-            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            sphere.Position = new Vector3(0.0f, 0.3f, -3.5f); // Биток ближе к центру
+            sphere.Velocity = new Vector3(0.0f, 0.0f, 0.0f);
             spheres.Add(sphere);
 
+
+            float ballRadius = 0.25f;
+            float startX = -0.5f;
+            float startZ = 0.5f;
+
+            // sphere 2
             Sphere sphere2 = new Sphere();
             sphere2.Initialize();
-            sphere2.Position = new Vector3(1.0f, 0.3f, 1.0f);  
-            sphere2.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            sphere2.Position = new Vector3(0.0f, 0.3f, startZ + ballRadius * 2);
+            sphere2.Velocity = Vector3.Zero;
             spheres.Add(sphere2);
 
+            // sphere 3
             Sphere sphere3 = new Sphere();
             sphere3.Initialize();
-            sphere3.Position = new Vector3(-1.0f, 0.3f, 1.0f);  
-            sphere3.Velocity = new Vector3(0.0f, 0.0f, 0.0f);  
+            sphere3.Position = new Vector3(-ballRadius * 2, 0.3f, startZ + ballRadius * 4);
+            sphere3.Velocity = Vector3.Zero;
             spheres.Add(sphere3);
+
+            //sphere 4
+            Sphere sphere4 = new Sphere();
+            sphere4.Initialize();
+            sphere4.Position = new Vector3(ballRadius * 2, 0.3f, startZ + ballRadius * 4);
+            sphere4.Velocity = Vector3.Zero;
+            spheres.Add(sphere4);
+
+            // sphere 5
+            Sphere sphere5 = new Sphere();
+            sphere5.Initialize();
+            sphere5.Position = new Vector3(-ballRadius * 4, 0.3f, startZ + ballRadius * 6);
+            sphere5.Velocity = Vector3.Zero;
+            spheres.Add(sphere5);
+
+            //sphere 6
+            Sphere sphere6 = new Sphere();
+            sphere6.Initialize();
+            sphere6.Position = new Vector3(0.0f, 0.3f, startZ + ballRadius * 6);
+            sphere6.Velocity = Vector3.Zero;
+            spheres.Add(sphere6);
+
+            //sphere 7
+            Sphere sphere7 = new Sphere();
+            sphere7.Initialize();
+            sphere7.Position = new Vector3(ballRadius * 4, 0.3f, startZ + ballRadius * 6);
+            sphere7.Velocity = Vector3.Zero;
+            spheres.Add(sphere7);
+
+            //sphere 8
+            Sphere sphere8 = new Sphere();
+            sphere8.Initialize();
+            sphere8.Position = new Vector3(-ballRadius * 6, 0.3f, startZ + ballRadius * 8);
+            sphere8.Velocity = Vector3.Zero;
+            spheres.Add(sphere8);
+
+            //sphere 9
+            Sphere sphere9 = new Sphere();
+            sphere9.Initialize();
+            sphere9.Position = new Vector3(-ballRadius * 2, 0.3f, startZ + ballRadius * 8);
+            sphere9.Velocity = Vector3.Zero;
+            spheres.Add(sphere9);
+
+            //sphere 10
+            Sphere sphere10 = new Sphere();
+            sphere10.Initialize();
+            sphere10.Position = new Vector3(ballRadius * 2, 0.3f, startZ + ballRadius * 8);
+            sphere10.Velocity = Vector3.Zero;
+            spheres.Add(sphere10);
+
+            //sphere 11
+            Sphere sphere11 = new Sphere();
+            sphere11.Initialize();
+            sphere11.Position = new Vector3(ballRadius * 6, 0.3f, startZ + ballRadius * 8);
+            sphere11.Velocity = Vector3.Zero;
+            spheres.Add(sphere11); 
 
             aiming = false;
             aimCorner = 0.0f;
